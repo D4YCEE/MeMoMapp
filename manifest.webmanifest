@@ -1,0 +1,15 @@
+{
+  "name": "MeMoMapp",
+  "short_name": "MeMoMapp",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#f7fbff",
+  "theme_color": "#b7ff2e",
+  "icons": [
+    {
+      "src": "assets/MeMoMapp.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}

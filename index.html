@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>MeMoMapp</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="assets/MeMoMapp.svg" type="image/svg+xml">
+  <meta name="theme-color" content="#b7ff2e"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand brand-pill">
+      <img src="assets/MeMoMapp.svg" alt="MeMoMapp Logo" class="brand-logo">
+      <h1>MeMoMapp</h1>
+    </div>
+    <div class="top-actions">
+      <button id="locateBtn" class="locate-btn header" title="Position finden">📍</button>
+      <button id="menuBtn" class="menu-btn" aria-label="Menü">☰</button>
+    </div>
+  </header>
+
+  <nav id="menuPanel" class="menu hidden" aria-hidden="true">
+    <div class="menu-card">
+      <div id="menuTabs" class="menu-tabs">
+        <button data-tab="log" id="tabLog" class="tab active">Log</button>
+        <button data-tab="labels" id="tabLabels" class="tab">Labels</button>
+      </div>
+      <div id="tabPanelLog" class="tab-panel">
+        <input id="logSearch" class="search" type="search" placeholder="Suche im Log (Text, #Tags, Labels)" />
+        <div id="logListMenu" class="log-list"></div>
+      </div>
+      <div id="tabPanelLabels" class="tab-panel" style="display:none">
+        <div class="labels-controls"><button id="newLabelBtn" class="item accent" style="width:auto">＋ Neues Label</button></div>
+        <div id="labelsList" class="labels-list"></div>
+      </div>
+      <div class="divider"></div>
+      <button id="exportBtn" class="item">Export (.json)</button>
+      <button id="importBtn" class="item">Import (.json)</button><input id="importFile" type="file" accept="application/json" style="display:none"/>
+      <button id="posterBtn" class="item">Poster Export</button>
+    </div>
+  </nav>
+
+  <main id="app">
+    <div id="map"></div>
+    <div id="labelLegend" class="legend"></div>
+
+    <div id="memoryPanel" class="panel hidden">
+      <button class="close" id="closePanel" title="Zurück">×</button>
+      <div class="panel-content">
+        <div id="panelGallery" class="gallery"></div>
+        <blockquote id="panelQuote" class="quote"></blockquote>
+        <div id="panelLocation" class="location"></div>
+        <div id="panelTags" class="tags"></div>
+        <div class="actions">
+          <button id="shareBtn" class="btn secondary">Als Bild teilen</button>
+          <button id="editBtn" class="btn secondary">Bearbeiten</button>
+          <button id="deleteBtn" class="btn danger">Löschen</button>
+        </div>
+      </div>
+    </div>
+
+    <button id="addBtn" class="fab"><span class="plus" aria-hidden="true">＋</span><span>memory</span></button>
+  </main>
+
+  <!-- Add Memory Modal -->
+  <div id="modal" class="modal hidden" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="modalTitle">Neue Erinnerung</h2>
+        <button id="closeModal" class="close">×</button>
+      </div>
+      <div class="modal-body">
+        <label class="field"><span>Label</span>
+          <select id="labelSelect"></select>
+        </label>
+        <label class="field"><span>Label-Farbe</span>
+          <input id="labelColor" type="color" value="#1e90ff"/>
+        </label>
+
+        <label class="field">
+          <span>Typ</span>
+          <select id="memType">
+            <option value="photo">Foto</option>
+            <option value="gallery">Galerie</option>
+            <option value="quote">Zitat</option>
+            <option value="thought">Gedanke</option>
+          </select>
+        </label>
+
+        <label class="field" id="photoField">
+          <span>Foto</span>
+          <input id="photoInput" type="file" accept="image/*" />
+        </label>
+
+        <label class="field hidden" id="galleryField">
+          <span>Galerie (mehrere)</span>
+          <input id="galleryInput" type="file" accept="image/*" multiple />
+        </label>
+
+        <label class="field">
+          <span>Emoji / Icon (falls kein Foto)</span>
+          <input id="emojiInput" type="text" placeholder="💬 🌿 📍" maxlength="2"/>
+        </label>
+
+        <label class="field">
+          <span>Zitat / Notiz (optional)</span>
+          <textarea id="textInput" rows="3" placeholder="Manche Orte bleiben für immer…"></textarea>
+        </label>
+
+        <label class="field">
+          <span>Tags (Komma oder # getrennt)</span>
+          <input id="tagsInput" type="text" placeholder="#sonnenuntergang, reise"/>
+        </label>
+
+        <div class="row">
+          <label class="field">
+            <span>Breite (Lat)</span>
+            <input id="latInput" type="number" step="0.000001" placeholder="auto"/>
+          </label>
+          <label class="field">
+            <span>Länge (Lng)</span>
+            <input id="lngInput" type="number" step="0.000001" placeholder="auto"/>
+          </label>
+        </div>
+
+        <div class="hint">Doppelklick (Desktop) oder Long-Press (Phone) auf die Karte setzt die Position · oder GPS nutzen</div>
+      </div>
+      <div class="modal-actions">
+        <button id="useGPS" class="btn secondary">GPS verwenden</button>
+        <button id="saveMemory" class="btn primary">Speichern</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('service-worker.js'));
+    }
+  </script>
+</body>
+</html>
